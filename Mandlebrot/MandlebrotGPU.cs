@@ -1,10 +1,12 @@
 ﻿using ILGPU;
+using ILGPU.Algorithms;
 using ILGPU.Runtime;
+using ILGPU.Runtime.Cuda;
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using static MandlebrotView.ColorHelper;
 
 namespace Mandlebrot
 {
@@ -22,8 +24,8 @@ namespace Mandlebrot
         public int maxIteration;
         public int width;
         public int height;
-        public double x0;
-        public double y0;
+        public double targetX;
+        public double targetY;
         public double posX;
         public double posY;
         public double zoom;
@@ -31,20 +33,20 @@ namespace Mandlebrot
         private Context context;
         private Accelerator accelerator;
 
-        private Action<Index1D, ArrayView<UInt32>, ArrayView<double>, ArrayView<double>, int, int> loadedKernel;
+        private Action<Index1D, ArrayView<byte>, ArrayView<double>, ArrayView<double>, int, int> loadedKernel;
 
-        private MemoryBuffer1D<UInt32, Stride1D.Dense> kernelImageBits;
+        private MemoryBuffer1D<byte, Stride1D.Dense> kernelImageBits;
 
         private MemoryBuffer1D<double, Stride1D.Dense> kernelCooXBuffer;
         private MemoryBuffer1D<double, Stride1D.Dense> kernelCooYBuffer;
 
-        internal MandlebrotGPU(int maxIteration, int width, int height, double x0 = 0, double y0 = 0, double posX = 0, double posY = 0, double zoom = 1)
+        internal MandlebrotGPU(int maxIteration, int width, int height, double targetX = 0, double targetY = 0, double posX = 0, double posY = 0, double zoom = 1)
         {
             this.maxIteration = maxIteration;
             this.width = width;
             this.height = height;
-            this.x0 = x0;
-            this.y0 = y0;
+            this.targetX = targetX;
+            this.targetY = targetY;
             this.posX = posX;
             this.posY = posY;
             this.zoom = zoom;
@@ -56,37 +58,33 @@ namespace Mandlebrot
         {
             context = Context.CreateDefault();
 
-            accelerator = context.GetPreferredDevice(false).CreateAccelerator(context);
+            accelerator = context.CreateCudaAccelerator(0);
 
-            loadedKernel = accelerator.LoadAutoGroupedStreamKernel<Index1D, ArrayView<UInt32>, ArrayView<double>, ArrayView<double>, int, int>(Kernel);
+            loadedKernel = accelerator.LoadAutoGroupedStreamKernel<Index1D, ArrayView<byte>, ArrayView<double>, ArrayView<double>, int, int>(Kernel);
         }
 
-        internal Bitmap GetMandlebrotImage()
-        {
-            return GetMandlebrotImage(maxIteration, width, height, x0, y0, posX, posY, zoom);
-        }
-
-        private Bitmap GetMandlebrotImage(int maxIteration, int width, int height, double x0, double y0, double posX, double posY, double zoom)
+        public Bitmap GetMandlebrotImage()
         {
             if (width <= 0 || height <= 0 || zoom <= 0)
                 return new Bitmap(0, 0);
 
-            double[] cooX = GetCoordinatesX(width, x0, posX, zoom);
-            double[] cooY = GetCoordinatesY(height, y0, posY, zoom);
+            double[] cooX = GetCoordinatesX(width, targetX, posX, zoom);
+            double[] cooY = GetCoordinatesY(height, targetY, posY, zoom);
 
             kernelCooXBuffer = accelerator.Allocate1D(cooX);
             kernelCooYBuffer = accelerator.Allocate1D(cooY);
-            kernelImageBits = accelerator.Allocate1D<UInt32>(width * height);
+            kernelImageBits = accelerator.Allocate1D<byte>(width * height * 4);
 
-            loadedKernel((int)kernelImageBits.Length, kernelImageBits.View, kernelCooXBuffer.View, kernelCooYBuffer.View, maxIteration, width);
+            loadedKernel(height*width, kernelImageBits.View, kernelCooXBuffer.View, kernelCooYBuffer.View, maxIteration, width);
             accelerator.Synchronize();
 
-            UInt32[] bits = kernelImageBits.GetAsArray1D();
+            byte[] bits = kernelImageBits.GetAsArray1D();
             GCHandle bitsHandle = GCHandle.Alloc(bits, GCHandleType.Pinned);
 
             Bitmap bitmap = new Bitmap(width, height, width * 4, PixelFormat.Format32bppPArgb, bitsHandle.AddrOfPinnedObject());
 
             bitsHandle.Free();
+
             kernelCooXBuffer.Dispose();
             kernelCooYBuffer.Dispose();
             kernelImageBits.Dispose();
@@ -94,7 +92,7 @@ namespace Mandlebrot
             return bitmap;
         }
 
-        private static void Kernel(Index1D i, ArrayView<UInt32> imageBits, ArrayView<double> cooX0, ArrayView<double> cooY0, int maxIteration, int width)
+        private static void Kernel(Index1D i, ArrayView<byte> imageBits, ArrayView<double> cooX0, ArrayView<double> cooY0, int maxIteration, int width)
         {
             double x0 = cooX0[i % width];
             double y0 = cooY0[i / width];
@@ -116,28 +114,34 @@ namespace Mandlebrot
                 ++iteration;
             }
 
-            float ratio = (float)iteration / maxIteration;
+            double ratio = IntrinsicMath.Clamp((double)iteration / maxIteration,0,1);
 
-            imageBits[i] = 4278190080u;
-            imageBits[i] += (uint)(ratio * 255u);
+            double h = XMath.Rem(XMath.Pow(ratio * 360, 1.5), 360);
+            double s = 0.5;
+            double l = ratio;
+
+            imageBits[i * 4]     = 0;
+            imageBits[i * 4 + 1] = 0;
+            imageBits[i * 4 + 2] = 0;
+            imageBits[i * 4 + 3] = 255;
         }
 
-        private static double[] GetCoordinatesX(int width, double x0, double posX, double zoom)
+        private static double[] GetCoordinatesX(int width, double targetX, double posX, double zoom)
         {
             double[] result = new double[width];
 
             for (int x = 0; x < width; x++)
-                result[x] = GetCoordinateX(width, x0, posX, zoom, (double)x / width);
+                result[x] = GetCoordinateX(width, targetX, posX, zoom, (double)x / width);
 
             return result;
         }
 
-        private static double[] GetCoordinatesY(int height, double y0, double posY, double zoom)
+        private static double[] GetCoordinatesY(int height, double targetY, double posY, double zoom)
         {
             double[] result = new double[height];
 
             for (int y = 0; y < height; y++)
-                result[y] = GetCoordinateY(height, y0, posY, zoom, (double)y / height);
+                result[y] = GetCoordinateY(height, targetY, posY, zoom, (double)y / height);
 
             return result;
         }
@@ -149,8 +153,8 @@ namespace Mandlebrot
         internal double GetRangeHeight() => GetRangeHeight(height, zoom);
 
 
-        private static double GetCoordinateX(int width, double x0, double posX, double zoom, double ratioX) => (posX + MIN_X0) + GetRangeWidth(width, zoom) * ratioX - GetRangeWidth(width, zoom) / 2d;
-        private static double GetCoordinateY(int height, double y0, double posY, double zoom, double ratioY) => -((posY + MIN_Y0) + GetRangeHeight(height, zoom) * ratioY - GetRangeHeight(height, zoom) / 2d);
+        private static double GetCoordinateX(int width, double targetX, double posX, double zoom, double ratioX) => (posX + MIN_X0) + GetRangeWidth(width, zoom) * ratioX - GetRangeWidth(width, zoom) / 2d;
+        private static double GetCoordinateY(int height, double targetY, double posY, double zoom, double ratioY) => -((posY + MIN_Y0) + GetRangeHeight(height, zoom) * ratioY - GetRangeHeight(height, zoom) / 2d);
 
         private static double GetRangeWidth(int width, double zoom) => (MAX_X0 - MIN_X0) / DEFAULT_SCREEN_WIDTH / zoom * width;
         private static double GetRangeHeight(int height, double zoom) => (MAX_Y0 - MIN_Y0) / DEFAULT_SCREEN_HEIGHT / zoom * height;

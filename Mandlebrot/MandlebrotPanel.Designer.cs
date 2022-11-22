@@ -36,8 +36,10 @@
             // 
             this.Picture.Dock = System.Windows.Forms.DockStyle.Fill;
             this.Picture.Location = new System.Drawing.Point(0, 0);
+            this.Picture.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Picture.Name = "Picture";
-            this.Picture.Size = new System.Drawing.Size(150, 150);
+            this.Picture.Size = new System.Drawing.Size(300, 288);
+            this.Picture.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.Picture.TabIndex = 0;
             this.Picture.TabStop = false;
             this.Picture.SizeChanged += new System.EventHandler(this.CanvasSizeChanged);
@@ -49,10 +51,12 @@
             // 
             // MandlebrotPanel
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.Picture);
+            this.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
             this.Name = "MandlebrotPanel";
+            this.Size = new System.Drawing.Size(300, 288);
             ((System.ComponentModel.ISupportInitialize)(this.Picture)).EndInit();
             this.ResumeLayout(false);
 

@@ -22,13 +22,16 @@ namespace Mandlebrot
         {
             InitializeComponent();
 
-            mandlebrot = new MandlebrotGPU(200, Width, Height, -0.45, 0, 1);
+            mandlebrot = new MandlebrotGPU(300, Width, Height, -0.45, 0, 1);
 
             MouseWheel += OnScroll;
         }
 
         private void CanvasSizeChanged(object sender, EventArgs e)
         {
+            if(mandlebrot == null)
+                return;
+
             mandlebrot.width = Width;
             mandlebrot.height = Height;
 
@@ -54,6 +57,9 @@ namespace Mandlebrot
         {
             if (isUpdated)
                 return;
+
+            if(Picture.Image != null)
+                Picture.Image.Dispose();
 
             Picture.Image = mandlebrot.GetMandlebrotImage().Clone() as Bitmap;
 
@@ -86,13 +92,9 @@ namespace Mandlebrot
                 isUpdated = false;
                 Picture.Invalidate();
             }
-            else
-            {
-                
-                mandlebrot.x0 = mandlebrot.ScreenToX0(e.X, Width);
-                mandlebrot.y0 = mandlebrot.ScreenToY0(e.Y, Height);
-            }
 
+            mandlebrot.targetX = mandlebrot.ScreenToX0(e.X, Width);
+            mandlebrot.targetY = mandlebrot.ScreenToY0(e.Y, Height);
             Console.WriteLine("X0 : " + mandlebrot.ScreenToX0(e.X, Width));
             Console.WriteLine("Y0 : " + mandlebrot.ScreenToY0(e.Y, Height));
         }
