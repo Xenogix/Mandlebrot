@@ -3,6 +3,7 @@ using ILGPU.Algorithms;
 using ILGPU.Runtime;
 using ILGPU.Runtime.Cuda;
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -21,24 +22,30 @@ namespace Mandlebrot
         const double DEFAULT_SCREEN_WIDTH = 500d;
         const double DEFAULT_SCREEN_HEIGHT = 300d;
 
-        public int maxIteration;
-        public int width;
-        public int height;
-        public double targetX;
-        public double targetY;
-        public double posX;
-        public double posY;
-        public double zoom;
+        public const double MAX_ZOOM = 8e13;
+
+        public int MaxIteration { get; set; }
+        public int Width { get; set; }
+        public int Height { get; set; }
+        public double TargetX { get; set; }
+        public double TargetY { get; set; }
+        public double PosX { get; set; }
+        public double PosY { get; set; }
+
+        private double zoom;
+        public double Zoom { get => zoom; set => zoom = Math.Min(value, MAX_ZOOM); }
 
         private Context context;
         private Accelerator accelerator;
 
-        private Action<Index1D, ArrayView<byte>, ArrayView<double>, ArrayView<double>, int, int> loadedKernel;
+        private Action<Index1D, ArrayView<double>, ArrayView<double>, ArrayView<double>, int, int> loadedMandlebrotKernel;
+        private Action<Index1D, ArrayView<double>, ArrayView<byte>> loadedColouringKernel;
 
         private MemoryBuffer1D<byte, Stride1D.Dense> kernelImageBits;
 
         private MemoryBuffer1D<double, Stride1D.Dense> kernelCooXBuffer;
         private MemoryBuffer1D<double, Stride1D.Dense> kernelCooYBuffer;
+        private MemoryBuffer1D<double, Stride1D.Dense> kernelImageIterations;
 
         private GCHandle bitsHandle;
         private GCHandle BitsHandle 
@@ -55,14 +62,14 @@ namespace Mandlebrot
 
         internal MandlebrotGPU(int maxIteration, int width, int height, double targetX = 0, double targetY = 0, double posX = 0, double posY = 0, double zoom = 1)
         {
-            this.maxIteration = maxIteration;
-            this.width = width;
-            this.height = height;
-            this.targetX = targetX;
-            this.targetY = targetY;
-            this.posX = posX;
-            this.posY = posY;
-            this.zoom = zoom;
+            this.MaxIteration = maxIteration;
+            this.Width = width;
+            this.Height = height;
+            this.TargetX = targetX;
+            this.TargetY = targetY;
+            this.PosX = posX;
+            this.PosY = posY;
+            this.Zoom = zoom;
 
             Initialize();
         }
@@ -73,37 +80,64 @@ namespace Mandlebrot
 
             accelerator = context.CreateCudaAccelerator(0);
 
-            loadedKernel = accelerator.LoadAutoGroupedStreamKernel<Index1D, ArrayView<byte>, ArrayView<double>, ArrayView<double>, int, int>(Kernel);
+            loadedMandlebrotKernel = accelerator.LoadAutoGroupedStreamKernel<Index1D, ArrayView<double>, ArrayView<double>, ArrayView<double>, int, int>(CalculateMandlebrotKernel);
+            loadedColouringKernel = accelerator.LoadAutoGroupedStreamKernel<Index1D, ArrayView<double>, ArrayView<byte>>(CalculateColorsKernel);
         }
 
         public Bitmap GetMandlebrotImage()
         {
-            if (width <= 0 || height <= 0 || zoom <= 0)
+            if (Width <= 0 || Height <= 0 || zoom <= 0)
                 return new Bitmap(0, 0);
 
-            double[] cooX = GetCoordinatesX(width, targetX, posX, zoom);
-            double[] cooY = GetCoordinatesY(height, targetY, posY, zoom);
+            StartMandlebrotKernel();
 
-            kernelCooXBuffer = accelerator.Allocate1D(cooX);
-            kernelCooYBuffer = accelerator.Allocate1D(cooY);
-            kernelImageBits = accelerator.Allocate1D<byte>(width * height * 4);
+            StartColouringKernel();
 
-            loadedKernel(height*width, kernelImageBits.View, kernelCooXBuffer.View, kernelCooYBuffer.View, maxIteration, width);
-            accelerator.Synchronize();
+            Bitmap bitmap = GenerateBitmap();
 
-            byte[] bits = kernelImageBits.GetAsArray1D();
-            BitsHandle = GCHandle.Alloc(bits, GCHandleType.Pinned);
-
-            Bitmap bitmap = new Bitmap(width, height, width * 4, PixelFormat.Format32bppPArgb, BitsHandle.AddrOfPinnedObject());
-
-            kernelCooXBuffer.Dispose();
-            kernelCooYBuffer.Dispose();
-            kernelImageBits.Dispose();
+            DisposeBuffers();
 
             return bitmap;
         }
 
-        private static void Kernel(Index1D i, ArrayView<byte> imageBits, ArrayView<double> cooX0, ArrayView<double> cooY0, int maxIteration, int width)
+        private void StartMandlebrotKernel()
+        {
+            double[] cooX = GetCoordinatesX(Width, TargetX, PosX, zoom);
+            double[] cooY = GetCoordinatesY(Height, TargetY, PosY, zoom);
+
+            kernelCooXBuffer = accelerator.Allocate1D(cooX);
+            kernelCooYBuffer = accelerator.Allocate1D(cooY);
+            kernelImageIterations = accelerator.Allocate1D<double>(Width * Height);
+
+            loadedMandlebrotKernel(Height * Width, kernelImageIterations.View, kernelCooXBuffer.View, kernelCooYBuffer.View, MaxIteration, Width);
+            accelerator.Synchronize();
+        }
+
+        private void StartColouringKernel()
+        {
+            kernelImageBits = accelerator.Allocate1D<byte>(Width * Height * 4);
+
+            loadedColouringKernel(Height * Width, kernelImageIterations.View, kernelImageBits.View);
+            accelerator.Synchronize();
+        }
+
+        private void DisposeBuffers()
+        {
+            kernelCooXBuffer.Dispose();
+            kernelCooYBuffer.Dispose();
+            kernelImageIterations.Dispose();
+            kernelImageBits.Dispose();
+        }
+
+        private Bitmap GenerateBitmap()
+        {
+            byte[] bits = kernelImageBits.GetAsArray1D();
+            BitsHandle = GCHandle.Alloc(bits, GCHandleType.Pinned);
+
+            return new Bitmap(Width, Height, Width * 4, PixelFormat.Format32bppPArgb, BitsHandle.AddrOfPinnedObject());
+        }
+
+        private static void CalculateMandlebrotKernel(Index1D i, ArrayView<double> imageIterations, ArrayView<double> cooX0, ArrayView<double> cooY0, int maxIteration, int width)
         {
             double x0 = cooX0[i % width];
             double y0 = cooY0[i / width];
@@ -125,23 +159,25 @@ namespace Mandlebrot
                 ++iteration;
             }
 
-            float ratio = IntrinsicMath.Clamp((float)iteration / (float)maxIteration,0,1);
+            imageIterations[i] = IntrinsicMath.Clamp((float)iteration / (float)maxIteration,0,1);
+        }
 
+        private static void CalculateColorsKernel(Index1D i, ArrayView<double> imageIterations, ArrayView<byte> imageBits)
+        {
+            double H = imageIterations[i] * imageIterations[i] * 360d;
+            double S = 0.5d;
+            double L = imageIterations[i];
 
-            float H = ((ratio * 360f)*(ratio * 360f)*(ratio * 360f))/((ratio * 360f)*(ratio * 360f));
-            float S = 0.5f;
-            float L = ratio;
-
-            if (H > 360)
+            while (H > 360)
                 H -= 360;
 
-            float C = (1 - IntrinsicMath.Abs(2 * L - 1)) * S;
-            float X = C * (1 - IntrinsicMath.Abs((((IntrinsicMath.DivRoundDown((int)H, 60) & (1 << 0)) != 0) ? 0 : 1)- 1));
-            float m = L - C / 2;
+            double C = (1 - IntrinsicMath.Abs(2 * L - 1)) * S;
+            double X = C * (1 - IntrinsicMath.Abs((((IntrinsicMath.DivRoundDown((int)H, 60) & (1 << 0)) != 0) ? 0 : 1) - 1));
+            double m = L - C / 2;
 
-            int r = (int)(H / 60f);
+            int r = (int)(H / 60d);
 
-            imageBits[i * 4]     = (byte)((((r == 0 || r == 5) ? C : ((r == 1 || r == 4) ? X : 0)) + m) * 255);
+            imageBits[i * 4] = (byte)((((r == 0 || r == 5) ? C : ((r == 1 || r == 4) ? X : 0)) + m) * 255);
             imageBits[i * 4 + 1] = (byte)((((r == 1 || r == 2) ? C : ((r == 0 || r == 3) ? X : 0)) + m) * 255);
             imageBits[i * 4 + 2] = (byte)((((r == 3 || r == 4) ? C : ((r == 2 || r == 5) ? X : 0)) + m) * 255);
             imageBits[i * 4 + 3] = 255;
@@ -167,12 +203,11 @@ namespace Mandlebrot
             return result;
         }
 
-        internal double ScreenToX0(double screenPosX, double screenWidth) => GetCoordinateX(width, 0, posX, zoom, screenPosX / screenWidth);
-        internal double ScreenToY0(double screenPosY, double screenHeight) => GetCoordinateY(height, 0, posY, zoom, screenPosY / screenHeight);
+        internal double ScreenToX0(double screenPosX, double screenWidth) => GetCoordinateX(Width, 0, PosX, zoom, screenPosX / screenWidth);
+        internal double ScreenToY0(double screenPosY, double screenHeight) => GetCoordinateY(Height, 0, PosY, zoom, screenPosY / screenHeight);
 
-        internal double GetRangeWidth() => GetRangeWidth(width, zoom);
-        internal double GetRangeHeight() => GetRangeHeight(height, zoom);
-
+        internal double GetRangeWidth() => GetRangeWidth(Width, zoom);
+        internal double GetRangeHeight() => GetRangeHeight(Height, zoom);
 
         private static double GetCoordinateX(int width, double targetX, double posX, double zoom, double ratioX) => (posX + MIN_X0) + GetRangeWidth(width, zoom) * ratioX - GetRangeWidth(width, zoom) / 2d;
         private static double GetCoordinateY(int height, double targetY, double posY, double zoom, double ratioY) => -((posY + MIN_Y0) + GetRangeHeight(height, zoom) * ratioY - GetRangeHeight(height, zoom) / 2d);

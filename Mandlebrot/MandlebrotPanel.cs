@@ -23,7 +23,7 @@ namespace Mandlebrot
         {
             InitializeComponent();
 
-            mandlebrot = new MandlebrotGPU(300, Width, Height, -0.45, 0, 1);
+            mandlebrot = new MandlebrotGPU(100, Width, Height, -0.45, 0, 1);
 
             MouseWheel += OnScroll;
         }
@@ -33,8 +33,8 @@ namespace Mandlebrot
             if(mandlebrot == null)
                 return;
 
-            mandlebrot.width = Width;
-            mandlebrot.height = Height;
+            mandlebrot.Width = Width;
+            mandlebrot.Height = Height;
 
             isUpdated = false;
             Picture.Invalidate();
@@ -46,9 +46,9 @@ namespace Mandlebrot
             int direction = Math.Sign(e.Delta);
 
             if (direction == -1)
-                mandlebrot.zoom *= 0.9;
+                mandlebrot.Zoom *= 0.9;
             else
-                mandlebrot.zoom *= 1.1;
+                mandlebrot.Zoom *= 1.1;
 
             isUpdated = false;
             Picture.Invalidate();
@@ -63,9 +63,7 @@ namespace Mandlebrot
                 Picture.Image.Dispose();
 
             Picture.Image = mandlebrot.GetMandlebrotImage().Clone() as Bitmap;
-
-            Console.WriteLine("Zoom : " + mandlebrot.zoom);
-
+;
             isUpdated = true;
         }
 
@@ -86,8 +84,8 @@ namespace Mandlebrot
         {
             if (mouseEntered)
             {
-                mandlebrot.posX -= mandlebrot.GetRangeWidth() / Width * (e.X - lastMouseX);
-                mandlebrot.posY -= mandlebrot.GetRangeHeight() / Height * (e.Y - lastMouseY);
+                mandlebrot.PosX -= mandlebrot.GetRangeWidth() / Width * (e.X - lastMouseX);
+                mandlebrot.PosY -= mandlebrot.GetRangeHeight() / Height * (e.Y - lastMouseY);
 
                 lastMouseX = e.X;
                 lastMouseY = e.Y;
@@ -96,8 +94,8 @@ namespace Mandlebrot
                 Picture.Invalidate();
             }
 
-            mandlebrot.targetX = mandlebrot.ScreenToX0(e.X, Width);
-            mandlebrot.targetY = mandlebrot.ScreenToY0(e.Y, Height);
+            mandlebrot.TargetX = mandlebrot.ScreenToX0(e.X, Width);
+            mandlebrot.TargetY = mandlebrot.ScreenToY0(e.Y, Height);
         }
     }
 }
