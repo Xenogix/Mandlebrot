@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -14,7 +15,7 @@ namespace Mandlebrot
 
         public bool mouseEntered = false;
 
-        bool isUpdated = false;
+        private bool isUpdated = false;
 
         private MandlebrotGPU mandlebrot;
         
@@ -63,6 +64,8 @@ namespace Mandlebrot
 
             Picture.Image = mandlebrot.GetMandlebrotImage().Clone() as Bitmap;
 
+            Console.WriteLine("Zoom : " + mandlebrot.zoom);
+
             isUpdated = true;
         }
 
@@ -95,8 +98,6 @@ namespace Mandlebrot
 
             mandlebrot.targetX = mandlebrot.ScreenToX0(e.X, Width);
             mandlebrot.targetY = mandlebrot.ScreenToY0(e.Y, Height);
-            Console.WriteLine("X0 : " + mandlebrot.ScreenToX0(e.X, Width));
-            Console.WriteLine("Y0 : " + mandlebrot.ScreenToY0(e.Y, Height));
         }
     }
 }

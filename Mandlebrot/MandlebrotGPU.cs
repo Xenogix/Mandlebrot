@@ -40,6 +40,19 @@ namespace Mandlebrot
         private MemoryBuffer1D<double, Stride1D.Dense> kernelCooXBuffer;
         private MemoryBuffer1D<double, Stride1D.Dense> kernelCooYBuffer;
 
+        private GCHandle bitsHandle;
+        private GCHandle BitsHandle 
+        { 
+            get => bitsHandle; 
+
+            set 
+            { 
+                if(bitsHandle.IsAllocated) 
+                    bitsHandle.Free(); 
+                bitsHandle = value; 
+            } 
+        }
+
         internal MandlebrotGPU(int maxIteration, int width, int height, double targetX = 0, double targetY = 0, double posX = 0, double posY = 0, double zoom = 1)
         {
             this.maxIteration = maxIteration;
@@ -79,11 +92,9 @@ namespace Mandlebrot
             accelerator.Synchronize();
 
             byte[] bits = kernelImageBits.GetAsArray1D();
-            GCHandle bitsHandle = GCHandle.Alloc(bits, GCHandleType.Pinned);
+            BitsHandle = GCHandle.Alloc(bits, GCHandleType.Pinned);
 
-            Bitmap bitmap = new Bitmap(width, height, width * 4, PixelFormat.Format32bppPArgb, bitsHandle.AddrOfPinnedObject());
-
-            bitsHandle.Free();
+            Bitmap bitmap = new Bitmap(width, height, width * 4, PixelFormat.Format32bppPArgb, BitsHandle.AddrOfPinnedObject());
 
             kernelCooXBuffer.Dispose();
             kernelCooYBuffer.Dispose();
@@ -114,15 +125,25 @@ namespace Mandlebrot
                 ++iteration;
             }
 
-            double ratio = IntrinsicMath.Clamp((double)iteration / maxIteration,0,1);
+            float ratio = IntrinsicMath.Clamp((float)iteration / (float)maxIteration,0,1);
 
-            double h = XMath.Rem(XMath.Pow(ratio * 360, 1.5), 360);
-            double s = 0.5;
-            double l = ratio;
 
-            imageBits[i * 4]     = 0;
-            imageBits[i * 4 + 1] = 0;
-            imageBits[i * 4 + 2] = 0;
+            float H = ((ratio * 360f)*(ratio * 360f)*(ratio * 360f))/((ratio * 360f)*(ratio * 360f));
+            float S = 0.5f;
+            float L = ratio;
+
+            if (H > 360)
+                H -= 360;
+
+            float C = (1 - IntrinsicMath.Abs(2 * L - 1)) * S;
+            float X = C * (1 - IntrinsicMath.Abs((((IntrinsicMath.DivRoundDown((int)H, 60) & (1 << 0)) != 0) ? 0 : 1)- 1));
+            float m = L - C / 2;
+
+            int r = (int)(H / 60f);
+
+            imageBits[i * 4]     = (byte)((((r == 0 || r == 5) ? C : ((r == 1 || r == 4) ? X : 0)) + m) * 255);
+            imageBits[i * 4 + 1] = (byte)((((r == 1 || r == 2) ? C : ((r == 0 || r == 3) ? X : 0)) + m) * 255);
+            imageBits[i * 4 + 2] = (byte)((((r == 3 || r == 4) ? C : ((r == 2 || r == 5) ? X : 0)) + m) * 255);
             imageBits[i * 4 + 3] = 255;
         }
 
