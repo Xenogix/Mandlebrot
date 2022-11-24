@@ -93,3 +93,7 @@ C:\Users\arthu\Desktop\Projects\Mandlebrot\Mandlebrot\obj\Debug\Mandlebrot.pdb
 E:\Projets\Mandlebrot\Mandlebrot\bin\Debug\ILGPU.Algorithms.dll
 E:\Projets\Mandlebrot\Mandlebrot\bin\Debug\ILGPU.Algorithms.pdb
 E:\Projets\Mandlebrot\Mandlebrot\bin\Debug\ILGPU.Algorithms.xml
+C:\Users\arthu\Desktop\Projects\Mandlebrot\Mandlebrot\bin\Debug\ILGPU.Algorithms.dll
+C:\Users\arthu\Desktop\Projects\Mandlebrot\Mandlebrot\bin\Debug\ILGPU.Algorithms.pdb
+C:\Users\arthu\Desktop\Projects\Mandlebrot\Mandlebrot\bin\Debug\ILGPU.Algorithms.xml
+C:\Users\arthu\Desktop\Projects\Mandlebrot\Mandlebrot\obj\Debug\Mandlebrot.MandlebrotParameters.resources

@@ -9,5 +9,10 @@ namespace MandlebrotView
         {
             InitializeComponent();
         }
+
+        private void MandlebrotPanelLoaded(object sender, EventArgs e)
+        {
+            mandlebrotParameters.Mandlebrot = mandlebrotPanel.Mandlebrot;
+        }
     }
 }

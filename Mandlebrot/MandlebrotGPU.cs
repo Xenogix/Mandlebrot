@@ -7,33 +7,50 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using static MandlebrotView.ColorHelper;
 
 namespace Mandlebrot
 {
-    internal class MandlebrotGPU
+    public class MandlebrotGPU
     {
-        const double MIN_X0 = -2.00;
-        const double MAX_X0 = 0.47;
+        private const double MIN_X0 = -2.00;
+        private const double MAX_X0 = 0.47;
 
-        const double MIN_Y0 = -1.12;
-        const double MAX_Y0 = 1.12;
+        private const double MIN_Y0 = -1.12;
+        private const double MAX_Y0 = 1.12;
 
-        const double DEFAULT_SCREEN_WIDTH = 500d;
-        const double DEFAULT_SCREEN_HEIGHT = 300d;
+        private const double DEFAULT_SCREEN_WIDTH = 500d;
+        private const double DEFAULT_SCREEN_HEIGHT = 300d;
 
         public const double MAX_ZOOM = 8e13;
+        public const int MAX_ITERATION = 2000;
 
-        public int MaxIteration { get; set; }
-        public int Width { get; set; }
-        public int Height { get; set; }
-        public double TargetX { get; set; }
-        public double TargetY { get; set; }
-        public double PosX { get; set; }
-        public double PosY { get; set; }
+        public event EventHandler ValueChanged;
+
+        private int width;
+        public int Width { get => width; set { width = value; NotifyValueChanged(); } }
+
+        private int height;
+        public int Height { get => height; set { height = value; NotifyValueChanged(); } }
+
+        private double targetX;
+        public double TargetX { get => targetX; set { targetX = value; NotifyValueChanged(); } }
+
+        private double targetY;
+        public double TargetY { get => targetY; set { targetY = value; NotifyValueChanged(); } }
+
+        private double posX;
+        public double PosX { get => posX; set { posX = value; NotifyValueChanged(); } }
+
+        private double posY;
+        public double PosY { get => posY; set { posY = value; NotifyValueChanged(); } }
+
+        private int iterations;
+        public int Iterations { get => iterations; set { iterations = Math.Min(value, MAX_ITERATION); NotifyValueChanged(); } }
 
         private double zoom;
-        public double Zoom { get => zoom; set => zoom = Math.Min(value, MAX_ZOOM); }
+        public double Zoom { get => zoom; set { zoom = Math.Min(value, MAX_ZOOM); NotifyValueChanged(); } }
 
         private Context context;
         private Accelerator accelerator;
@@ -60,9 +77,9 @@ namespace Mandlebrot
             } 
         }
 
-        internal MandlebrotGPU(int maxIteration, int width, int height, double targetX = 0, double targetY = 0, double posX = 0, double posY = 0, double zoom = 1)
+        internal MandlebrotGPU(int iterations, int width, int height, double targetX = 0, double targetY = 0, double posX = 0, double posY = 0, double zoom = 1)
         {
-            this.MaxIteration = maxIteration;
+            this.Iterations = iterations;
             this.Width = width;
             this.Height = height;
             this.TargetX = targetX;
@@ -82,6 +99,11 @@ namespace Mandlebrot
 
             loadedMandlebrotKernel = accelerator.LoadAutoGroupedStreamKernel<Index1D, ArrayView<double>, ArrayView<double>, ArrayView<double>, int, int>(CalculateMandlebrotKernel);
             loadedColouringKernel = accelerator.LoadAutoGroupedStreamKernel<Index1D, ArrayView<double>, ArrayView<byte>>(CalculateColorsKernel);
+        }
+
+        private void NotifyValueChanged()
+        {
+            ValueChanged?.Invoke(this, EventArgs.Empty);
         }
 
         public Bitmap GetMandlebrotImage()
@@ -109,7 +131,7 @@ namespace Mandlebrot
             kernelCooYBuffer = accelerator.Allocate1D(cooY);
             kernelImageIterations = accelerator.Allocate1D<double>(Width * Height);
 
-            loadedMandlebrotKernel(Height * Width, kernelImageIterations.View, kernelCooXBuffer.View, kernelCooYBuffer.View, MaxIteration, Width);
+            loadedMandlebrotKernel(Height * Width, kernelImageIterations.View, kernelCooXBuffer.View, kernelCooYBuffer.View, Iterations, Width);
             accelerator.Synchronize();
         }
 
@@ -209,8 +231,8 @@ namespace Mandlebrot
         internal double GetRangeWidth() => GetRangeWidth(Width, zoom);
         internal double GetRangeHeight() => GetRangeHeight(Height, zoom);
 
-        private static double GetCoordinateX(int width, double targetX, double posX, double zoom, double ratioX) => (posX + MIN_X0) + GetRangeWidth(width, zoom) * ratioX - GetRangeWidth(width, zoom) / 2d;
-        private static double GetCoordinateY(int height, double targetY, double posY, double zoom, double ratioY) => -((posY + MIN_Y0) + GetRangeHeight(height, zoom) * ratioY - GetRangeHeight(height, zoom) / 2d);
+        private static double GetCoordinateX(int width, double targetX, double posX, double zoom, double ratioX) => posX + GetRangeWidth(width, zoom) * ratioX - GetRangeWidth(width, zoom) / 2d;
+        private static double GetCoordinateY(int height, double targetY, double posY, double zoom, double ratioY) => -(posY + GetRangeHeight(height, zoom) * ratioY - GetRangeHeight(height, zoom) / 2d);
 
         private static double GetRangeWidth(int width, double zoom) => (MAX_X0 - MIN_X0) / DEFAULT_SCREEN_WIDTH / zoom * width;
         private static double GetRangeHeight(int height, double zoom) => (MAX_Y0 - MIN_Y0) / DEFAULT_SCREEN_HEIGHT / zoom * height;

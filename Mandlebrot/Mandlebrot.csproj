@@ -141,6 +141,12 @@
     <Compile Include="MandlebrotPanel.Designer.cs">
       <DependentUpon>MandlebrotPanel.cs</DependentUpon>
     </Compile>
+    <Compile Include="MandlebrotParameters.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="MandlebrotParameters.Designer.cs">
+      <DependentUpon>MandlebrotParameters.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Display.resx">
@@ -148,6 +154,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="MandlebrotPanel.resx">
       <DependentUpon>MandlebrotPanel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MandlebrotParameters.resx">
+      <DependentUpon>MandlebrotParameters.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -7,51 +6,49 @@ namespace Mandlebrot
 {
     public partial class MandlebrotPanel : UserControl
     {
-        public double x0;
-        public double y0;
+        private int lastMouseX;
+        private int lastMouseY;
 
-        public int lastMouseX;
-        public int lastMouseY;
-
-        public bool mouseEntered = false;
+        private bool mouseEntered = false;
 
         private bool isUpdated = false;
 
-        private MandlebrotGPU mandlebrot;
+        public MandlebrotGPU Mandlebrot { get; set; }
         
+
         public MandlebrotPanel()
         {
             InitializeComponent();
 
-            mandlebrot = new MandlebrotGPU(100, Width, Height, -0.45, 0, 1);
+            Mandlebrot = new MandlebrotGPU(100, Width, Height);
+            Mandlebrot.ValueChanged += UpdateMandlebrot;
 
-            MouseWheel += OnScroll;
+            MouseWheel += OnScroll;  
         }
 
-        private void CanvasSizeChanged(object sender, EventArgs e)
+        public void UpdateMandlebrot(object sender, EventArgs e)
         {
-            if(mandlebrot == null)
-                return;
-
-            mandlebrot.Width = Width;
-            mandlebrot.Height = Height;
-
             isUpdated = false;
             Picture.Invalidate();
         }
 
+        private void CanvasSizeChanged(object sender, EventArgs e)
+        {
+            if(Mandlebrot == null)
+                return;
+
+            Mandlebrot.Width = Width;
+            Mandlebrot.Height = Height;
+        }
 
         private void OnScroll(object sender, MouseEventArgs e)
         {
             int direction = Math.Sign(e.Delta);
 
             if (direction == -1)
-                mandlebrot.Zoom *= 0.9;
+                Mandlebrot.Zoom *= 0.9;
             else
-                mandlebrot.Zoom *= 1.1;
-
-            isUpdated = false;
-            Picture.Invalidate();
+                Mandlebrot.Zoom *= 1.1;
         }
 
         private void OnPaint(object sender, PaintEventArgs e)
@@ -62,7 +59,7 @@ namespace Mandlebrot
             if(Picture.Image != null)
                 Picture.Image.Dispose();
 
-            Picture.Image = mandlebrot.GetMandlebrotImage().Clone() as Bitmap;
+            Picture.Image = Mandlebrot.GetMandlebrotImage();
 ;
             isUpdated = true;
         }
@@ -84,18 +81,12 @@ namespace Mandlebrot
         {
             if (mouseEntered)
             {
-                mandlebrot.PosX -= mandlebrot.GetRangeWidth() / Width * (e.X - lastMouseX);
-                mandlebrot.PosY -= mandlebrot.GetRangeHeight() / Height * (e.Y - lastMouseY);
+                Mandlebrot.PosX -= Mandlebrot.GetRangeWidth() / Width * (e.X - lastMouseX);
+                Mandlebrot.PosY -= Mandlebrot.GetRangeHeight() / Height * (e.Y - lastMouseY);
 
                 lastMouseX = e.X;
                 lastMouseY = e.Y;
-
-                isUpdated = false;
-                Picture.Invalidate();
             }
-
-            mandlebrot.TargetX = mandlebrot.ScreenToX0(e.X, Width);
-            mandlebrot.TargetY = mandlebrot.ScreenToY0(e.Y, Height);
         }
     }
 }
