@@ -28,115 +28,114 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.iterSlider = new System.Windows.Forms.TrackBar();
-            this.zoomSlider = new System.Windows.Forms.TrackBar();
-            this.titleIter = new System.Windows.Forms.Label();
-            this.titleZoom = new System.Windows.Forms.Label();
-            this.labelIter = new System.Windows.Forms.Label();
-            this.labelZoom = new System.Windows.Forms.Label();
-            ((System.ComponentModel.ISupportInitialize)(this.iterSlider)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.zoomSlider)).BeginInit();
-            this.SuspendLayout();
+            iterSlider = new TrackBar();
+            zoomSlider = new TrackBar();
+            titleIter = new Label();
+            titleZoom = new Label();
+            labelIter = new Label();
+            labelZoom = new Label();
+            ((System.ComponentModel.ISupportInitialize)iterSlider).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)zoomSlider).BeginInit();
+            SuspendLayout();
             // 
             // iterSlider
             // 
-            this.iterSlider.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.iterSlider.Location = new System.Drawing.Point(4, 41);
-            this.iterSlider.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.iterSlider.Maximum = 1000;
-            this.iterSlider.Minimum = 1;
-            this.iterSlider.Name = "iterSlider";
-            this.iterSlider.Size = new System.Drawing.Size(200, 45);
-            this.iterSlider.TabIndex = 0;
-            this.iterSlider.TickFrequency = 100;
-            this.iterSlider.Value = 1;
-            this.iterSlider.ValueChanged += new System.EventHandler(this.IterSliderValueChanged);
+            iterSlider.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            iterSlider.Location = new Point(3, 51);
+            iterSlider.Margin = new Padding(7, 8, 7, 8);
+            iterSlider.Maximum = 1000;
+            iterSlider.Minimum = 1;
+            iterSlider.Name = "iterSlider";
+            iterSlider.Size = new Size(343, 80);
+            iterSlider.TabIndex = 0;
+            iterSlider.TickFrequency = 100;
+            iterSlider.Value = 1;
+            iterSlider.ValueChanged += IterSliderValueChanged;
             // 
             // zoomSlider
             // 
-            this.zoomSlider.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.zoomSlider.Location = new System.Drawing.Point(4, 119);
-            this.zoomSlider.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.zoomSlider.Maximum = 1000;
-            this.zoomSlider.Minimum = 1;
-            this.zoomSlider.Name = "zoomSlider";
-            this.zoomSlider.Size = new System.Drawing.Size(200, 45);
-            this.zoomSlider.TabIndex = 1;
-            this.zoomSlider.TickFrequency = 100;
-            this.zoomSlider.Value = 1;
-            this.zoomSlider.ValueChanged += new System.EventHandler(this.ZoomSliderValueChanged);
+            zoomSlider.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            zoomSlider.Location = new Point(3, 207);
+            zoomSlider.Margin = new Padding(7, 8, 7, 8);
+            zoomSlider.Maximum = 1000;
+            zoomSlider.Minimum = 1;
+            zoomSlider.Name = "zoomSlider";
+            zoomSlider.Size = new Size(343, 80);
+            zoomSlider.TabIndex = 1;
+            zoomSlider.TickFrequency = 100;
+            zoomSlider.Value = 1;
+            zoomSlider.ValueChanged += ZoomSliderValueChanged;
             // 
             // titleIter
             // 
-            this.titleIter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.titleIter.AutoSize = true;
-            this.titleIter.Location = new System.Drawing.Point(9, 23);
-            this.titleIter.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.titleIter.Name = "titleIter";
-            this.titleIter.Size = new System.Drawing.Size(93, 15);
-            this.titleIter.TabIndex = 2;
-            this.titleIter.Text = "Iteration Count :";
+            titleIter.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            titleIter.AutoSize = true;
+            titleIter.Location = new Point(11, 15);
+            titleIter.Margin = new Padding(7, 0, 7, 0);
+            titleIter.Name = "titleIter";
+            titleIter.Size = new Size(164, 30);
+            titleIter.TabIndex = 2;
+            titleIter.Text = "Iteration Count :";
             // 
             // titleZoom
             // 
-            this.titleZoom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.titleZoom.AutoSize = true;
-            this.titleZoom.Location = new System.Drawing.Point(9, 100);
-            this.titleZoom.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.titleZoom.Name = "titleZoom";
-            this.titleZoom.Size = new System.Drawing.Size(45, 15);
-            this.titleZoom.TabIndex = 3;
-            this.titleZoom.Text = "Zoom :";
+            titleZoom.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            titleZoom.AutoSize = true;
+            titleZoom.Location = new Point(11, 169);
+            titleZoom.Margin = new Padding(7, 0, 7, 0);
+            titleZoom.Name = "titleZoom";
+            titleZoom.Size = new Size(78, 30);
+            titleZoom.TabIndex = 3;
+            titleZoom.Text = "Zoom :";
             // 
             // labelIter
             // 
-            this.labelIter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.labelIter.AutoSize = true;
-            this.labelIter.Location = new System.Drawing.Point(112, 23);
-            this.labelIter.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.labelIter.Name = "labelIter";
-            this.labelIter.Size = new System.Drawing.Size(13, 15);
-            this.labelIter.TabIndex = 4;
-            this.labelIter.Text = "0";
+            labelIter.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            labelIter.AutoSize = true;
+            labelIter.Location = new Point(188, 15);
+            labelIter.Margin = new Padding(7, 0, 7, 0);
+            labelIter.Name = "labelIter";
+            labelIter.Size = new Size(24, 30);
+            labelIter.TabIndex = 4;
+            labelIter.Text = "0";
             // 
             // labelZoom
             // 
-            this.labelZoom.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.labelZoom.AutoSize = true;
-            this.labelZoom.Location = new System.Drawing.Point(63, 100);
-            this.labelZoom.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.labelZoom.Name = "labelZoom";
-            this.labelZoom.Size = new System.Drawing.Size(13, 15);
-            this.labelZoom.TabIndex = 5;
-            this.labelZoom.Text = "0";
+            labelZoom.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            labelZoom.AutoSize = true;
+            labelZoom.Location = new Point(104, 169);
+            labelZoom.Margin = new Padding(7, 0, 7, 0);
+            labelZoom.Name = "labelZoom";
+            labelZoom.Size = new Size(24, 30);
+            labelZoom.TabIndex = 5;
+            labelZoom.Text = "0";
             // 
             // MandlebrotParameters
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.labelZoom);
-            this.Controls.Add(this.labelIter);
-            this.Controls.Add(this.titleZoom);
-            this.Controls.Add(this.titleIter);
-            this.Controls.Add(this.zoomSlider);
-            this.Controls.Add(this.iterSlider);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.Name = "MandlebrotParameters";
-            this.Size = new System.Drawing.Size(206, 179);
-            ((System.ComponentModel.ISupportInitialize)(this.iterSlider)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.zoomSlider)).EndInit();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AutoScaleDimensions = new SizeF(12F, 30F);
+            AutoScaleMode = AutoScaleMode.Font;
+            Controls.Add(labelZoom);
+            Controls.Add(labelIter);
+            Controls.Add(titleZoom);
+            Controls.Add(titleIter);
+            Controls.Add(zoomSlider);
+            Controls.Add(iterSlider);
+            Margin = new Padding(7, 8, 7, 8);
+            Name = "MandlebrotParameters";
+            Size = new Size(353, 277);
+            ((System.ComponentModel.ISupportInitialize)iterSlider).EndInit();
+            ((System.ComponentModel.ISupportInitialize)zoomSlider).EndInit();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
 
-        private System.Windows.Forms.TrackBar iterSlider;
-        private System.Windows.Forms.TrackBar zoomSlider;
-        private System.Windows.Forms.Label titleIter;
-        private System.Windows.Forms.Label titleZoom;
-        private System.Windows.Forms.Label labelIter;
-        private System.Windows.Forms.Label labelZoom;
+        private TrackBar iterSlider;
+        private TrackBar zoomSlider;
+        private Label titleIter;
+        private Label titleZoom;
+        private Label labelIter;
+        private Label labelZoom;
     }
 }

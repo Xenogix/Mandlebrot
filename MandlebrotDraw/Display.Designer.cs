@@ -28,43 +28,42 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.mandlebrotPanel = new MandlebrotDraw.MandlebrotPanel();
-            this.mandlebrotParameters = new MandlebrotDraw.MandlebrotParameters();
-            this.SuspendLayout();
+            mandlebrotPanel = new MandlebrotPanel();
+            mandlebrotParameters = new MandlebrotParameters();
+            SuspendLayout();
             // 
             // mandlebrotPanel
             // 
-            this.mandlebrotPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.mandlebrotPanel.Location = new System.Drawing.Point(0, 0);
-            this.mandlebrotPanel.Margin = new System.Windows.Forms.Padding(6);
-            this.mandlebrotPanel.Name = "mandlebrotPanel";
-            this.mandlebrotPanel.Size = new System.Drawing.Size(1600, 865);
-            this.mandlebrotPanel.TabIndex = 0;
-            this.mandlebrotPanel.Load += new System.EventHandler(this.MandlebrotPanelLoaded);
+            mandlebrotPanel.Dock = DockStyle.Fill;
+            mandlebrotPanel.Location = new Point(0, 0);
+            mandlebrotPanel.Margin = new Padding(6, 7, 6, 7);
+            mandlebrotPanel.Name = "mandlebrotPanel";
+            mandlebrotPanel.Size = new Size(1600, 1038);
+            mandlebrotPanel.TabIndex = 0;
+            mandlebrotPanel.Load += MandlebrotPanelLoaded;
             // 
             // mandlebrotParameters
             // 
-            this.mandlebrotParameters.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.mandlebrotParameters.Location = new System.Drawing.Point(1209, 32);
-            this.mandlebrotParameters.Mandlebrot = null;
-            this.mandlebrotParameters.Margin = new System.Windows.Forms.Padding(6);
-            this.mandlebrotParameters.Name = "mandlebrotParameters";
-            this.mandlebrotParameters.Size = new System.Drawing.Size(354, 298);
-            this.mandlebrotParameters.TabIndex = 1;
+            mandlebrotParameters.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            mandlebrotParameters.Location = new Point(1209, 38);
+            mandlebrotParameters.Mandlebrot = null;
+            mandlebrotParameters.Margin = new Padding(6, 7, 6, 7);
+            mandlebrotParameters.Name = "mandlebrotParameters";
+            mandlebrotParameters.Size = new Size(354, 254);
+            mandlebrotParameters.TabIndex = 1;
             // 
             // Display
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1600, 865);
-            this.Controls.Add(this.mandlebrotParameters);
-            this.Controls.Add(this.mandlebrotPanel);
-            this.DoubleBuffered = true;
-            this.Margin = new System.Windows.Forms.Padding(6);
-            this.Name = "Display";
-            this.Text = "Display";
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new SizeF(12F, 30F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1600, 1038);
+            Controls.Add(mandlebrotParameters);
+            Controls.Add(mandlebrotPanel);
+            DoubleBuffered = true;
+            Margin = new Padding(6, 7, 6, 7);
+            Name = "Display";
+            Text = "Display";
+            ResumeLayout(false);
         }
 
         #endregion
